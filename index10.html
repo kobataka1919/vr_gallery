@@ -1,136 +1,191 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>スマホ対応VRギャラリー（ジョイスティック＆フリック操作）</title>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.controls.min.js"></script>
-  <script src="https://unpkg.com/aframe-joystick-component/dist/aframe-joystick-component.min.js"></script>
-  <style>
-    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; }
-    #ui-panel {
-      position: fixed; top: 10px; left: 10px;
-      background: rgba(255,255,255,0.95);
-      padding: 12px;
-      border-radius: 8px;
-      z-index: 100;
-      max-width: 90vw;
-      font-size: 16px;
-    }
-    label, select {
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>VRギャラリー＋ジョイスティック</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <style>
+      body, html {
+        margin: 0; height: 100%; overflow: hidden;
+        touch-action: none; /* タッチジェスチャー無効化 */
+      }
+      #joystick {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 50%;
+        touch-action: none;
+        user-select: none;
+        z-index: 9999;
+      }
+      #joystickInner {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 60px;
+        height: 60px;
+        margin-left: -30px;
+        margin-top: -30px;
+        background: rgba(255,255,255,0.7);
+        border-radius: 50%;
+        touch-action: none;
+        user-select: none;
+        transition: transform 0.1s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <a-scene background="color: #ECECEC">
 
-<div id="ui-panel">
-  <label for="frameColor">額縁の色を選択：</label>
-  <select id="frameColor">
-    <option value="#ff4444">赤</option>
-    <option value="#44ff44" selected>緑</option>
-    <option value="#4444ff">青</option>
-    <option value="#ffff44">黄</option>
-    <option value="#ff44ff">紫</option>
-    <option value="#44ffff">シアン</option>
-    <option value="#ffffff">白</option>
-    <option value="#000000">黒</option>
-  </select>
-</div>
+      <!-- カメラと移動コントロール -->
+      <a-entity id="rig" position="0 1.6 5">
+        <a-entity id="camera" camera wasd-controls look-controls>
+        </a-entity>
+      </a-entity>
 
-<a-scene vr-mode-ui="enabled: true" embedded>
-  <a-entity id="rig" movement-controls="fly: false" position="0 1.6 0">
-    <a-entity 
-      id="camera" 
-      camera 
-      look-controls="touchEnabled: true; mouseEnabled: false"
-      position="0 0 0">
-    </a-entity>
-  </a-entity>
+      <!-- 床 -->
+      <a-plane src="assets/textures/floor.jpg" repeat="10 10"
+               rotation="-90 0 0" width="20" height="20"></a-plane>
 
-  <!-- ジョイスティック -->
-  <a-joystick 
-    id="joystick" 
-    position="0 0 0" 
-    left="true"
-    color="#007AFF"
-    radius="40"
-    baseColor="#ccc"
-    baseOpacity="0.5"
-    stickOpacity="0.8">
-  </a-joystick>
+      <!-- 壁（前） -->
+      <a-plane src="assets/textures/wall.jpg" position="0 2 -5"
+               rotation="0 0 0" width="20" height="4"></a-plane>
 
-  <!-- ギャラリー壁 -->
-  <a-plane position="0 2 -6" rotation="0 0 0" width="70" height="6" color="#888888"></a-plane>
+      <!-- 壁（後） -->
+      <a-plane src="assets/textures/wall.jpg" position="0 2 5"
+               rotation="0 180 0" width="20" height="4"></a-plane>
 
-  <script src="js/gallery.js"></script>
-</a-scene>
+      <!-- 壁（左） -->
+      <a-plane src="assets/textures/wall.jpg" position="-10 2 0"
+               rotation="0 90 0" width="10" height="4"></a-plane>
 
-<script>
-  // 作品情報（10点）
-  const artworks = [
-    {src: 'assets/images/artwork1.jpg', title: '作品1', twitter: '@artist1', id: '001'},
-    {src: 'assets/images/artwork2.jpg', title: '作品2', twitter: '@artist2', id: '002'},
-    {src: 'assets/images/artwork3.jpg', title: '作品3', twitter: '@artist3', id: '003'},
-    {src: 'assets/images/artwork4.jpg', title: '作品4', twitter: '@artist4', id: '004'},
-    {src: 'assets/images/artwork5.jpg', title: '作品5', twitter: '@artist5', id: '005'},
-    {src: 'assets/images/artwork6.jpg', title: '作品6', twitter: '@artist6', id: '006'},
-    {src: 'assets/images/artwork7.jpg', title: '作品7', twitter: '@artist7', id: '007'},
-    {src: 'assets/images/artwork8.jpg', title: '作品8', twitter: '@artist8', id: '008'},
-    {src: 'assets/images/artwork9.jpg', title: '作品9', twitter: '@artist9', id: '009'},
-    {src: 'assets/images/artwork10.jpg', title: '作品10', twitter: '@artist10', id: '010'}
-  ];
+      <!-- 壁（右） -->
+      <a-plane src="assets/textures/wall.jpg" position="10 2 0"
+               rotation="0 -90 0" width="10" height="4"></a-plane>
 
-  const scene = document.querySelector('a-scene');
-  const frameColorSelect = document.getElementById('frameColor');
+      <!-- 天井 -->
+      <a-plane color="#cccccc" position="0 4 0"
+               rotation="90 0 0" width="20" height="20"></a-plane>
 
-  // 額縁色で額縁を更新
-  function updateFrames(color) {
-    document.querySelectorAll('.frame').forEach(f => {
-      f.setAttribute('material', 'color', color);
-    });
-  }
+      <!-- 画像展示 1 -->
+      <a-image src="assets/images/artwork1.jpg"
+               position="-5 2 -4.9" width="3" height="2"
+               class="clickable" artwork-title="作品1" artwork-info="作者：AAA"></a-image>
 
-  // 作品を自動配置
-  function layoutArtworks() {
-    const startX = -27; // 開始X座標
-    const gap = 6;      // 作品間隔
-    artworks.forEach((artwork, i) => {
-      const x = startX + i * gap;
-      // 額縁（四角）
-      const frame = document.createElement('a-plane');
-      frame.setAttribute('position', `${x} 2 -5`);
-      frame.setAttribute('width', 3.4);
-      frame.setAttribute('height', 2.4);
-      frame.setAttribute('material', 'color', frameColorSelect.value);
-      frame.classList.add('frame');
-      scene.appendChild(frame);
+      <!-- 画像展示 2 -->
+      <a-image src="assets/images/artwork2.jpg"
+               position="0 2 -4.9" width="3" height="2"
+               class="clickable" artwork-title="作品2" artwork-info="作者：BBB"></a-image>
 
-      // 画像
-      const img = document.createElement('a-image');
-      img.setAttribute('position', `${x} 2 -4.9`);
-      img.setAttribute('width', 3);
-      img.setAttribute('height', 2);
-      img.setAttribute('src', artwork.src);
-      img.setAttribute('class', 'artwork');
-      scene.appendChild(img);
+      <!-- 画像展示 3 -->
+      <a-image src="assets/images/artwork3.jpg"
+               position="+5 2 -4.9" width="3" height="2"
+               class="clickable" artwork-title="作品3" artwork-info="作者：CCC"></a-image>
 
-      // タイトル表示（クリックで簡易情報表示）
-      img.addEventListener('click', () => {
-        alert(`タイトル: ${artwork.title}\nTwitter: ${artwork.twitter}\nID: ${artwork.id}`);
+      <!-- 照明 -->
+      <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+      <a-light type="directional" color="#ffffff" intensity="0.5" position="1 4 1"></a-light>
+
+      <!-- 画像クリック時のポップアップ（拡大用） -->
+      <a-entity id="popup" visible="false">
+        <a-plane id="popup-bg" color="#000" opacity="0.8" position="0 2 -3" width="4" height="3"></a-plane>
+        <a-image id="popup-img" position="0 2 -2.99" width="3.8" height="2.8"></a-image>
+        <a-text id="popup-title" value="" position="0 0.7 -2.98" align="center" color="#FFF" width="4"></a-text>
+      </a-entity>
+
+    </a-scene>
+
+    <!-- ジョイスティックUI -->
+    <div id="joystick">
+      <div id="joystickInner"></div>
+    </div>
+
+    <script>
+      // 画像クリックでポップアップ表示
+      const images = document.querySelectorAll('.clickable');
+      const popup = document.getElementById('popup');
+      const popupImg = document.getElementById('popup-img');
+      const popupTitle = document.getElementById('popup-title');
+
+      images.forEach(img => {
+        img.addEventListener('click', (e) => {
+          e.stopPropagation(); // ポップアップ以外クリックで閉じる処理と競合しないように
+          popup.setAttribute('visible', true);
+          popupImg.setAttribute('src', img.getAttribute('src'));
+          popupTitle.setAttribute('value', img.getAttribute('artwork-title') + "\n" + img.getAttribute('artwork-info'));
+        });
       });
-    });
-  }
 
-  // 額縁色変更イベント登録
-  frameColorSelect.addEventListener('change', e => {
-    updateFrames(e.target.value);
-  });
+      // 背景クリックでポップアップを閉じる
+      document.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('clickable')) {
+          popup.setAttribute('visible', false);
+        }
+      });
 
-  // 初期配置
-  layoutArtworks();
-</script>
+      // ジョイスティック処理
+      const joystick = document.getElementById('joystick');
+      const joystickInner = document.getElementById('joystickInner');
+      const rig = document.getElementById('rig');
 
-</body>
+      let dragging = false;
+      let startX, startY;
+      const maxRadius = 50; // ジョイスティックの最大半径
+      let joyX = 0;
+      let joyY = 0;
+
+      joystick.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+
+        let dist = Math.min(maxRadius, Math.sqrt(dx*dx + dy*dy));
+        let angle = Math.atan2(dy, dx);
+
+        joyX = Math.cos(angle) * (dist / maxRadius);
+        joyY = Math.sin(angle) * (dist / maxRadius);
+
+        joystickInner.style.transform = `translate(${joyX * maxRadius}px, ${joyY * maxRadius}px)`;
+      });
+
+      window.addEventListener('pointerup', () => {
+        dragging = false;
+        joyX = 0;
+        joyY = 0;
+        joystickInner.style.transform = `translate(0px, 0px)`;
+      });
+
+      // カメラリグの移動（毎フレーム）
+      function animate() {
+        if (joyX !== 0 || joyY !== 0) {
+          const pos = rig.object3D.position;
+          const rot = rig.object3D.rotation;
+
+          // カメラの向きに合わせて前・右ベクトルを計算
+          const forward = new THREE.Vector3(0, 0, -1);
+          const right = new THREE.Vector3(1, 0, 0);
+
+          forward.applyEuler(rot);
+          right.applyEuler(rot);
+
+          const moveSpeed = 0.05;
+          pos.add(forward.multiplyScalar(joyY * moveSpeed));
+          pos.add(right.multiplyScalar(joyX * moveSpeed));
+        }
+
+        requestAnimationFrame(animate);
+      }
+      animate();
+    </script>
+  </body>
 </html>
