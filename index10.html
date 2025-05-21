@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>スマホ対応VRギャラリー（ジョイスティック＆フリック操作）</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.controls.min.js"></script>
+  <script src="https://unpkg.com/aframe-joystick-component/dist/aframe-joystick-component.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; }
+    #ui-panel {
+      position: fixed; top: 10px; left: 10px;
+      background: rgba(255,255,255,0.95);
+      padding: 12px;
+      border-radius: 8px;
+      z-index: 100;
+      max-width: 90vw;
+      font-size: 16px;
+    }
+    label, select {
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ui-panel">
+  <label for="frameColor">額縁の色を選択：</label>
+  <select id="frameColor">
+    <option value="#ff4444">赤</option>
+    <option value="#44ff44" selected>緑</option>
+    <option value="#4444ff">青</option>
+    <option value="#ffff44">黄</option>
+    <option value="#ff44ff">紫</option>
+    <option value="#44ffff">シアン</option>
+    <option value="#ffffff">白</option>
+    <option value="#000000">黒</option>
+  </select>
+</div>
+
+<a-scene vr-mode-ui="enabled: true" embedded>
+  <a-entity id="rig" movement-controls="fly: false" position="0 1.6 0">
+    <a-entity 
+      id="camera" 
+      camera 
+      look-controls="touchEnabled: true; mouseEnabled: false"
+      position="0 0 0">
+    </a-entity>
+  </a-entity>
+
+  <!-- ジョイスティック -->
+  <a-joystick 
+    id="joystick" 
+    position="0 0 0" 
+    left="true"
+    color="#007AFF"
+    radius="40"
+    baseColor="#ccc"
+    baseOpacity="0.5"
+    stickOpacity="0.8">
+  </a-joystick>
+
+  <!-- ギャラリー壁 -->
+  <a-plane position="0 2 -6" rotation="0 0 0" width="70" height="6" color="#888888"></a-plane>
+
+  <script src="js/gallery.js"></script>
+</a-scene>
+
+<script>
+  // 作品情報（10点）
+  const artworks = [
+    {src: 'assets/images/artwork1.jpg', title: '作品1', twitter: '@artist1', id: '001'},
+    {src: 'assets/images/artwork2.jpg', title: '作品2', twitter: '@artist2', id: '002'},
+    {src: 'assets/images/artwork3.jpg', title: '作品3', twitter: '@artist3', id: '003'},
+    {src: 'assets/images/artwork4.jpg', title: '作品4', twitter: '@artist4', id: '004'},
+    {src: 'assets/images/artwork5.jpg', title: '作品5', twitter: '@artist5', id: '005'},
+    {src: 'assets/images/artwork6.jpg', title: '作品6', twitter: '@artist6', id: '006'},
+    {src: 'assets/images/artwork7.jpg', title: '作品7', twitter: '@artist7', id: '007'},
+    {src: 'assets/images/artwork8.jpg', title: '作品8', twitter: '@artist8', id: '008'},
+    {src: 'assets/images/artwork9.jpg', title: '作品9', twitter: '@artist9', id: '009'},
+    {src: 'assets/images/artwork10.jpg', title: '作品10', twitter: '@artist10', id: '010'}
+  ];
+
+  const scene = document.querySelector('a-scene');
+  const frameColorSelect = document.getElementById('frameColor');
+
+  // 額縁色で額縁を更新
+  function updateFrames(color) {
+    document.querySelectorAll('.frame').forEach(f => {
+      f.setAttribute('material', 'color', color);
+    });
+  }
+
+  // 作品を自動配置
+  function layoutArtworks() {
+    const startX = -27; // 開始X座標
+    const gap = 6;      // 作品間隔
+    artworks.forEach((artwork, i) => {
+      const x = startX + i * gap;
+      // 額縁（四角）
+      const frame = document.createElement('a-plane');
+      frame.setAttribute('position', `${x} 2 -5`);
+      frame.setAttribute('width', 3.4);
+      frame.setAttribute('height', 2.4);
+      frame.setAttribute('material', 'color', frameColorSelect.value);
+      frame.classList.add('frame');
+      scene.appendChild(frame);
+
+      // 画像
+      const img = document.createElement('a-image');
+      img.setAttribute('position', `${x} 2 -4.9`);
+      img.setAttribute('width', 3);
+      img.setAttribute('height', 2);
+      img.setAttribute('src', artwork.src);
+      img.setAttribute('class', 'artwork');
+      scene.appendChild(img);
+
+      // タイトル表示（クリックで簡易情報表示）
+      img.addEventListener('click', () => {
+        alert(`タイトル: ${artwork.title}\nTwitter: ${artwork.twitter}\nID: ${artwork.id}`);
+      });
+    });
+  }
+
+  // 額縁色変更イベント登録
+  frameColorSelect.addEventListener('change', e => {
+    updateFrames(e.target.value);
+  });
+
+  // 初期配置
+  layoutArtworks();
+</script>
+
+</body>
+</html>
