@@ -2,49 +2,150 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>VRギャラリー</title>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="script.js" defer></script>
+  <title>ジョイスティック＆フリック操作対応テンプレート</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <style>
-    #ui-panel {
+    body, html { margin: 0; height: 100%; overflow: hidden; }
+    #joystick {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 120px;
+      height: 120px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      touch-action: none;
+      user-select: none;
+    }
+    #joystickInner {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px;
-      border-radius: 8px;
-      z-index: 100;
-      font-family: sans-serif;
+      left: 50%;
+      top: 50%;
+      width: 60px;
+      height: 60px;
+      margin-left: -30px;
+      margin-top: -30px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      touch-action: none;
+      user-select: none;
     }
   </style>
 </head>
 <body>
-<div id="ui-panel">
-  額縁の色: 
-  <select id="frame-color">
-    <option value="black">黒</option>
-    <option value="white">白</option>
-    <option value="gold">金</option>
-    <option value="red">赤</option>
-  </select>
+
+<!-- A-Frame シーン -->
+<a-scene embedded>
+  <a-box position="0 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+  <a-sky color="#ECECEC"></a-sky>
+  <a-entity id="cameraRig" position="0 1.6 0">
+    <a-camera id="camera" look-controls="enabled: false"></a-camera>
+  </a-entity>
+</a-scene>
+
+<!-- ジョイスティックUI -->
+<div id="joystick">
+  <div id="joystickInner"></div>
 </div>
 
-<a-scene background="color: #ECECEC">
-  <a-entity id="rig" position="0 1.6 5">
-    <a-entity camera wasd-controls look-controls></a-entity>
-  </a-entity>
+<script>
+  const joystick = document.getElementById('joystick');
+  const joystickInner = document.getElementById('joystickInner');
+  const cameraRig = document.getElementById('cameraRig');
 
-  <a-plane src="assets/textures/floor.jpg" repeat="10 10" rotation="-90 0 0" width="30" height="20"></a-plane>
-  <a-plane src="assets/textures/wall.jpg" position="0 2 -5" rotation="0 0 0" width="30" height="4"></a-plane>
+  let dragging = false;
+  let startX, startY;
+  let maxRadius = 50;
 
-  <a-entity id="popup" visible="false">
-    <a-plane id="popup-bg" color="#000" opacity="0.8" position="0 2 -3" width="4" height="3"></a-plane>
-    <a-image id="popup-img" position="0 2 -2.99" width="3.8" height="2.8"></a-image>
-    <a-text id="popup-title" value="" position="0 0.7 -2.98" align="center" color="#FFF" width="4"></a-text>
-  </a-entity>
+  let joyX = 0, joyY = 0;
 
-  <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
-  <a-light type="directional" color="#ffffff" intensity="0.5" position="1 4 1"></a-light>
-</a-scene>
+  joystick.addEventListener('pointerdown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+
+  window.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
+    let dist = Math.min(maxRadius, Math.sqrt(dx*dx + dy*dy));
+    let angle = Math.atan2(dy, dx);
+
+    joyX = Math.cos(angle) * (dist / maxRadius);
+    joyY = Math.sin(angle) * (dist / maxRadius);
+
+    joystickInner.style.transform = `translate(${joyX * maxRadius}px, ${joyY * maxRadius}px)`;
+  });
+
+  window.addEventListener('pointerup', e => {
+    dragging = false;
+    joyX = 0; joyY = 0;
+    joystickInner.style.transform = `translate(0px, 0px)`;
+  });
+
+  // フリック操作検出用
+  let flickStartX = null;
+  let flickStartY = null;
+  let flickThreshold = 50; // 最小移動量
+
+  window.addEventListener('touchstart', e => {
+    if(e.touches.length === 1){
+      flickStartX = e.touches[0].clientX;
+      flickStartY = e.touches[0].clientY;
+    }
+  });
+
+  window.addEventListener('touchend', e => {
+    if(flickStartX === null || flickStartY === null) return;
+    let flickEndX = e.changedTouches[0].clientX;
+    let flickEndY = e.changedTouches[0].clientY;
+    let dx = flickEndX - flickStartX;
+    let dy = flickEndY - flickStartY;
+
+    if(Math.abs(dx) > flickThreshold || Math.abs(dy) > flickThreshold){
+      // フリック方向を判定
+      let direction;
+      if(Math.abs(dx) > Math.abs(dy)){
+        direction = dx > 0 ? 'right' : 'left';
+      } else {
+        direction = dy > 0 ? 'down' : 'up';
+      }
+      console.log('Flick detected:', direction);
+      alert('フリック方向: ' + direction);
+    }
+    flickStartX = null;
+    flickStartY = null;
+  });
+
+  // 毎フレームカメラ移動（ジョイスティックに応じて）
+  function animate(){
+    if(joyX !== 0 || joyY !== 0){
+      // カメラリグの移動: joyXは左右, joyYは前後（カメラの向きに合わせて調整）
+      let rigPos = cameraRig.object3D.position;
+      // 前方向ベクトル（z軸）
+      let forward = new THREE.Vector3(0,0,-1);
+      let right = new THREE.Vector3(1,0,0);
+      let moveSpeed = 0.05;
+
+      // Y軸回転（水平回転）だけ取得（カメラのyaw）
+      let rotation = cameraRig.object3D.rotation;
+      let yaw = rotation.y;
+
+      // 前方向と右方向をカメラの向きに合わせて回転
+      forward.applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
+      right.applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
+
+      // 移動量
+      rigPos.add(forward.multiplyScalar(joyY * moveSpeed));
+      rigPos.add(right.multiplyScalar(joyX * moveSpeed));
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+</script>
+
 </body>
 </html>
+
