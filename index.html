@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>VRギャラリー</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="script.js" defer></script>
+  <style>
+    #ui-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 100;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+<div id="ui-panel">
+  額縁の色: 
+  <select id="frame-color">
+    <option value="black">黒</option>
+    <option value="white">白</option>
+    <option value="gold">金</option>
+    <option value="red">赤</option>
+  </select>
+</div>
+
+<a-scene background="color: #ECECEC">
+  <a-entity id="rig" position="0 1.6 5">
+    <a-entity camera wasd-controls look-controls></a-entity>
+  </a-entity>
+
+  <a-plane src="assets/textures/floor.jpg" repeat="10 10" rotation="-90 0 0" width="30" height="20"></a-plane>
+  <a-plane src="assets/textures/wall.jpg" position="0 2 -5" rotation="0 0 0" width="30" height="4"></a-plane>
+
+  <a-entity id="popup" visible="false">
+    <a-plane id="popup-bg" color="#000" opacity="0.8" position="0 2 -3" width="4" height="3"></a-plane>
+    <a-image id="popup-img" position="0 2 -2.99" width="3.8" height="2.8"></a-image>
+    <a-text id="popup-title" value="" position="0 0.7 -2.98" align="center" color="#FFF" width="4"></a-text>
+  </a-entity>
+
+  <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+  <a-light type="directional" color="#ffffff" intensity="0.5" position="1 4 1"></a-light>
+</a-scene>
+</body>
+</html>
